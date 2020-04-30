@@ -143,6 +143,17 @@ Node *new_node_num(int val){
 Node *expr();
 Node *primary();
 Node *mul();
+Node *unary();
+
+//単項演算子(+, -)処理
+Node *unary(){
+    if(consume('+')){ return unary(); }//+はそのまま返す
+    if (consume('-')){
+        //exp:-1の場合内部的に0-1に置き換える
+        return new_binary(ND_SUB, new_node_num(0), unary());
+    }
+    return primary();
+}
 
 //構文木解析の括弧処理
 Node *primary(){
@@ -158,15 +169,16 @@ Node *primary(){
 
 
 //構文木解析の乗除算処理
+// mul = unary ("*" unary | "/" unary)*
 Node *mul(){
-    Node *node = primary();
+    Node *node = unary();
 
     for (;;){
         if(consume('*')){
-            node = new_binary(ND_MUL, node, primary());
+            node = new_binary(ND_MUL, node, unary());
         }
         else if(consume('/')){
-            node = new_binary(ND_DIV, node, primary());
+            node = new_binary(ND_DIV, node, unary());
         }
         else{
             return node;
